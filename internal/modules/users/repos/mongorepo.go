@@ -46,8 +46,13 @@ func (r *MongoUsersRepo) GetByID(id string) (*models.User, error) {
 
 	var user models.User
 
-	var filter = bson.M{"_id": id, "deletedAt": bson.M{"$eq": nil}}
-	err := r.coll.FindOne(ctx, filter).Decode(&user)
+	objectID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var filter = bson.M{"_id": objectID, "deletedAt": nil}
+	err = r.coll.FindOne(ctx, filter).Decode(&user)
 
 	if err != nil {
 		if errors.Is(mongo.ErrNoDocuments, err) {
@@ -57,7 +62,8 @@ func (r *MongoUsersRepo) GetByID(id string) (*models.User, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	user.Password = ""
+	return &user, nil
 }
 
 func (r *MongoUsersRepo) GetByEmail(email string) (*models.User, error) {
@@ -94,7 +100,7 @@ func (r *MongoUsersRepo) Create(user *models.User) (*models.User, error) {
 		return nil, err
 	}
 
-	user.ID = inserted.InsertedID.(bson.ObjectID).Hex()
+	user.ID = inserted.InsertedID.(bson.ObjectID)
 	user.Password = ""
 	return user, nil
 }

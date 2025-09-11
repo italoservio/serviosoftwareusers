@@ -10,4 +10,7 @@ func RegisterUsersRoutes(mux *mux.Router, c *deps.Container) {
 	mux.
 		Handle("/users", http.HandlerFunc(c.UsersHttpAPI.CreateUser)).
 		Methods("POST")
+	mux.
+		Handle("/users/{id}", http.HandlerFunc(c.UsersHttpAPI.GetUserByID)).
+		Methods("GET")
 }

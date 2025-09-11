@@ -11,28 +11,31 @@ import (
 )
 
 type Container struct {
-	Validator     validator.Validate
-	UsersRepo     usersrepos.UsersRepo
-	UsersHttpAPI  users.UsersHttpAPI
-	CreateUserCmd userscmds.Cmd[usersmodels.User, usersmodels.User]
+	Validator      validator.Validate
+	UsersRepo      usersrepos.UsersRepo
+	UsersHttpAPI   users.UsersHttpAPI
+	CreateUserCmd  userscmds.Cmd[userscmds.CreateUserInput, usersmodels.User]
+	GetUserByIDCmd userscmds.Cmd[userscmds.GetUserByIDCmdInput, usersmodels.User]
 }
 
 func NewContainer(db *db.DB) *Container {
-	val, err := validation.NewValidator()
+	v, err := validation.NewValidator()
 
-	ur := usersrepos.NewMongoUsersRepo(db)
-	cuc := userscmds.NewCreateUserCmd(ur)
+	usersRepository := usersrepos.NewMongoUsersRepo(db)
+	createUserCmd := userscmds.NewCreateUserCmd(usersRepository)
+	getUserByIDCmd := userscmds.NewGetUserByIDCmd(usersRepository)
 
-	ua := users.NewUsersHttpAPI(val, cuc)
+	usersHttpAPI := users.NewUsersHttpAPI(v, createUserCmd, getUserByIDCmd)
 
 	if err != nil {
 		panic(err)
 	}
 
 	return &Container{
-		Validator:     *val,
-		UsersRepo:     ur,
-		CreateUserCmd: cuc,
-		UsersHttpAPI:  *ua,
+		Validator:      *v,
+		UsersRepo:      usersRepository,
+		CreateUserCmd:  createUserCmd,
+		GetUserByIDCmd: getUserByIDCmd,
+		UsersHttpAPI:   *usersHttpAPI,
 	}
 }

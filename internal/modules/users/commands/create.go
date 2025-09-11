@@ -27,20 +27,26 @@ type CreateUserInput struct {
 	Password  string   `bson:"password,omitempty" json:"password,omitempty" validate:"required,min=8,max=100"`
 }
 
-func (c *CreateUserCmd) Exec(input *models.User) (*models.User, error) {
+func (c *CreateUserCmd) Exec(input *CreateUserInput) (*models.User, error) {
 	if existing, err := c.repo.GetByEmail(input.Email); err != nil || existing != nil {
 		return nil, exception.NewResourceExistsException("Usuario ja existente")
 	}
 
-	input.FullName = fmt.Sprintf("%s %s", input.FirstName, input.LastName)
+	user := &models.User{}
+	user.FirstName = input.FirstName
+	user.LastName = input.LastName
+	user.Email = input.Email
+	user.Roles = input.Roles
+
+	user.FullName = fmt.Sprintf("%s %s", input.FirstName, input.LastName)
 
 	hashedPass, err := hashPass(input.Password)
 	if err != nil {
 		return nil, exception.NewInternalException(err.Error())
 	}
 
-	input.Password = hashedPass
-	user, err := c.repo.Create(input)
+	user.Password = hashedPass
+	created, err := c.repo.Create(user)
 
 	if err != nil {
 		err := exception.NewRepoException(
@@ -50,7 +56,7 @@ func (c *CreateUserCmd) Exec(input *models.User) (*models.User, error) {
 		return nil, err
 	}
 
-	return user, nil
+	return created, nil
 }
 
 func hashPass(incomingPass string) (string, error) {

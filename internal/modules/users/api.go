@@ -3,6 +3,7 @@ package users
 import (
 	"encoding/json"
 	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/commands"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
@@ -10,17 +11,20 @@ import (
 )
 
 type UsersHttpAPI struct {
-	validate      validator.Validate
-	CreateUserCmd commands.Cmd[models.User, models.User]
+	validate       validator.Validate
+	CreateUserCmd  commands.Cmd[commands.CreateUserInput, models.User]
+	GetUserByIDCmd commands.Cmd[commands.GetUserByIDCmdInput, models.User]
 }
 
 func NewUsersHttpAPI(
 	validate *validator.Validate,
 	createUserCmd *commands.CreateUserCmd,
+	getUserByIdCmd *commands.GetUserByIDCmd,
 ) *UsersHttpAPI {
 	return &UsersHttpAPI{
-		validate:      *validate,
-		CreateUserCmd: createUserCmd,
+		validate:       *validate,
+		CreateUserCmd:  createUserCmd,
+		GetUserByIDCmd: getUserByIdCmd,
 	}
 }
 
@@ -28,7 +32,7 @@ func (u *UsersHttpAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 	body := r.Body
 	defer body.Close()
 
-	var payload models.User
+	var payload commands.CreateUserInput
 	err := json.NewDecoder(body).Decode(&payload)
 
 	if err != nil {
@@ -55,4 +59,29 @@ func (u *UsersHttpAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 
 	return
+}
+
+func (u *UsersHttpAPI) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	pathParameters := mux.Vars(r)
+	userID := pathParameters["id"]
+
+	payload := commands.GetUserByIDCmdInput{ID: userID}
+
+	err := u.validate.Struct(payload)
+	if err != nil {
+		exception.NewValidatorException(err).WriteJSON(w)
+		return
+	}
+
+	user, err := u.GetUserByIDCmd.Exec(&payload)
+	if err != nil {
+		exception.ToAppException(err).WriteJSON(w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(user)
+
+	w.Write(response)
 }
