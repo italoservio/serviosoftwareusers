@@ -13,4 +13,7 @@ func RegisterUsersRoutes(mux *mux.Router, c *deps.Container) {
 	mux.
 		Handle("/users/{id}", http.HandlerFunc(c.UsersHttpAPI.GetUserByID)).
 		Methods("GET")
+	mux.
+		Handle("/users/{id}", http.HandlerFunc(c.UsersHttpAPI.DeleteUserByID)).
+		Methods("DELETE")
 }

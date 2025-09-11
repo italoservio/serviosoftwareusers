@@ -148,11 +148,16 @@ func (r *MongoUsersRepo) Update(user *models.User) (*models.User, error) {
 	return user, err
 }
 
-func (r *MongoUsersRepo) Delete(id string) error {
+func (r *MongoUsersRepo) DeleteByID(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := r.coll.DeleteOne(ctx, bson.M{"_id": id})
+	objectID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.coll.DeleteOne(ctx, bson.M{"_id": objectID})
 	return err
 }
 

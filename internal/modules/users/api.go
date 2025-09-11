@@ -11,20 +11,23 @@ import (
 )
 
 type UsersHttpAPI struct {
-	validate       validator.Validate
-	CreateUserCmd  commands.Cmd[commands.CreateUserInput, models.User]
-	GetUserByIDCmd commands.Cmd[commands.GetUserByIDCmdInput, models.User]
+	validate          validator.Validate
+	CreateUserCmd     commands.Cmd[commands.CreateUserInput, models.User]
+	GetUserByIDCmd    commands.Cmd[commands.GetUserByIDCmdInput, models.User]
+	DeleteUserByIDCmd commands.CmdNoOutput[commands.DeleteUserByIDCmdInput]
 }
 
 func NewUsersHttpAPI(
 	validate *validator.Validate,
 	createUserCmd *commands.CreateUserCmd,
 	getUserByIdCmd *commands.GetUserByIDCmd,
+	deleteUserByIdCmd *commands.DeleteUserByIDCmd,
 ) *UsersHttpAPI {
 	return &UsersHttpAPI{
-		validate:       *validate,
-		CreateUserCmd:  createUserCmd,
-		GetUserByIDCmd: getUserByIdCmd,
+		validate:          *validate,
+		CreateUserCmd:     createUserCmd,
+		GetUserByIDCmd:    getUserByIdCmd,
+		DeleteUserByIDCmd: deleteUserByIdCmd,
 	}
 }
 
@@ -84,4 +87,25 @@ func (u *UsersHttpAPI) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	response, _ := json.Marshal(user)
 
 	w.Write(response)
+}
+
+func (u *UsersHttpAPI) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
+	pathParameters := mux.Vars(r)
+	userID := pathParameters["id"]
+
+	payload := commands.DeleteUserByIDCmdInput{ID: userID}
+
+	err := u.validate.Struct(payload)
+	if err != nil {
+		exception.NewValidatorException(err).WriteJSON(w)
+		return
+	}
+
+	err = u.DeleteUserByIDCmd.Exec(&payload)
+	if err != nil {
+		exception.ToAppException(err).WriteJSON(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

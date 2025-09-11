@@ -11,11 +11,12 @@ import (
 )
 
 type Container struct {
-	Validator      validator.Validate
-	UsersRepo      usersrepos.UsersRepo
-	UsersHttpAPI   users.UsersHttpAPI
-	CreateUserCmd  userscmds.Cmd[userscmds.CreateUserInput, usersmodels.User]
-	GetUserByIDCmd userscmds.Cmd[userscmds.GetUserByIDCmdInput, usersmodels.User]
+	Validator         validator.Validate
+	UsersRepo         usersrepos.UsersRepo
+	UsersHttpAPI      users.UsersHttpAPI
+	CreateUserCmd     userscmds.Cmd[userscmds.CreateUserInput, usersmodels.User]
+	GetUserByIDCmd    userscmds.Cmd[userscmds.GetUserByIDCmdInput, usersmodels.User]
+	DeleteUserByIdCmd userscmds.CmdNoOutput[userscmds.DeleteUserByIDCmdInput]
 }
 
 func NewContainer(db *db.DB) *Container {
@@ -24,18 +25,25 @@ func NewContainer(db *db.DB) *Container {
 	usersRepository := usersrepos.NewMongoUsersRepo(db)
 	createUserCmd := userscmds.NewCreateUserCmd(usersRepository)
 	getUserByIDCmd := userscmds.NewGetUserByIDCmd(usersRepository)
+	deleteUserByIdCmd := userscmds.NewDeleteUserByIDCmd(usersRepository)
 
-	usersHttpAPI := users.NewUsersHttpAPI(v, createUserCmd, getUserByIDCmd)
+	usersHttpAPI := users.NewUsersHttpAPI(
+		v,
+		createUserCmd,
+		getUserByIDCmd,
+		deleteUserByIdCmd,
+	)
 
 	if err != nil {
 		panic(err)
 	}
 
 	return &Container{
-		Validator:      *v,
-		UsersRepo:      usersRepository,
-		CreateUserCmd:  createUserCmd,
-		GetUserByIDCmd: getUserByIDCmd,
-		UsersHttpAPI:   *usersHttpAPI,
+		Validator:         *v,
+		UsersRepo:         usersRepository,
+		CreateUserCmd:     createUserCmd,
+		GetUserByIDCmd:    getUserByIDCmd,
+		UsersHttpAPI:      *usersHttpAPI,
+		DeleteUserByIdCmd: deleteUserByIdCmd,
 	}
 }
