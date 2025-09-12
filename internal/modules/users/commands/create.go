@@ -1,14 +1,10 @@
 package commands
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
-	"os"
 )
 
 type CreateUserCmd struct {
@@ -40,7 +36,7 @@ func (c *CreateUserCmd) Exec(input *CreateUserInput) (*models.User, error) {
 
 	user.FullName = fmt.Sprintf("%s %s", input.FirstName, input.LastName)
 
-	hashedPass, err := hashPass(input.Password)
+	hashedPass, err := HashPass(input.Password)
 	if err != nil {
 		return nil, exception.NewInternalException(err.Error())
 	}
@@ -57,17 +53,4 @@ func (c *CreateUserCmd) Exec(input *CreateUserInput) (*models.User, error) {
 	}
 
 	return created, nil
-}
-
-func hashPass(incomingPass string) (string, error) {
-	secret := os.Getenv("PASS_SECRET")
-
-	if secret == "" {
-		return "", errors.New("Nao ha chave de criptografia de senha")
-	}
-
-	hasher := sha256.New()
-	hasher.Write([]byte(incomingPass))
-
-	return hex.EncodeToString(hasher.Sum([]byte(secret))), nil
 }

@@ -16,6 +16,7 @@ type UsersHttpAPI struct {
 	validate          validator.Validate
 	CreateUserCmd     commands.Cmd[commands.CreateUserInput, models.User]
 	GetUserByIDCmd    commands.Cmd[commands.GetUserByIDCmdInput, models.User]
+	UpdateUserByIDCmd commands.Cmd[commands.UpdateUserByIDCmdInput, models.User]
 	DeleteUserByIDCmd commands.CmdNoOutput[commands.DeleteUserByIDCmdInput]
 	ListUserCmd       commands.Cmd[commands.ListUserCmdInput, commands.ListUserCmdOutput]
 }
@@ -24,6 +25,7 @@ func NewUsersHttpAPI(
 	validate *validator.Validate,
 	createUserCmd *commands.CreateUserCmd,
 	getUserByIdCmd *commands.GetUserByIDCmd,
+	updateUserByIdCmd *commands.UpdateUserByIDCmd,
 	deleteUserByIdCmd *commands.DeleteUserByIDCmd,
 	listUserCmd *commands.ListUserCmd,
 ) *UsersHttpAPI {
@@ -31,6 +33,7 @@ func NewUsersHttpAPI(
 		validate:          *validate,
 		CreateUserCmd:     createUserCmd,
 		GetUserByIDCmd:    getUserByIdCmd,
+		UpdateUserByIDCmd: updateUserByIdCmd,
 		DeleteUserByIDCmd: deleteUserByIdCmd,
 		ListUserCmd:       listUserCmd,
 	}
@@ -42,7 +45,6 @@ func (u *UsersHttpAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	var payload commands.CreateUserInput
 	err := json.NewDecoder(body).Decode(&payload)
-
 	if err != nil {
 		exception.NewPayloadException().WriteJSON(w)
 		return
@@ -55,7 +57,6 @@ func (u *UsersHttpAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := u.CreateUserCmd.Exec(&payload)
-
 	if err != nil {
 		exception.ToAppException(err).WriteJSON(w)
 		return
@@ -82,6 +83,40 @@ func (u *UsersHttpAPI) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := u.GetUserByIDCmd.Exec(&payload)
+	if err != nil {
+		exception.ToAppException(err).WriteJSON(w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(user)
+
+	w.Write(response)
+}
+
+func (u *UsersHttpAPI) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
+	pathParameters := mux.Vars(r)
+	userID := pathParameters["id"]
+
+	body := r.Body
+	defer body.Close()
+
+	var payload commands.UpdateUserByIDCmdInput
+	err := json.NewDecoder(body).Decode(&payload)
+	if err != nil {
+		exception.NewPayloadException().WriteJSON(w)
+		return
+	}
+
+	payload.ID = userID
+	err = u.validate.Struct(payload)
+	if err != nil {
+		exception.NewValidatorException(err).WriteJSON(w)
+		return
+	}
+
+	user, err := u.UpdateUserByIDCmd.Exec(&payload)
 	if err != nil {
 		exception.ToAppException(err).WriteJSON(w)
 		return

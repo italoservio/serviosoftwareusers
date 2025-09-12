@@ -6,7 +6,7 @@ type UsersRepo interface {
 	GetByID(id string) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)
 	Create(user *models.User) (*models.User, error)
-	Update(user *models.User) (*models.User, error)
+	UpdateByID(id string, user *models.User) (*models.User, error)
 	DeleteByID(id string) error
 	List(input *ListInput) (*ListOutput, error)
 }

@@ -16,7 +16,9 @@ type Container struct {
 	UsersHttpAPI      users.UsersHttpAPI
 	CreateUserCmd     userscmds.Cmd[userscmds.CreateUserInput, usersmodels.User]
 	GetUserByIDCmd    userscmds.Cmd[userscmds.GetUserByIDCmdInput, usersmodels.User]
+	UpdateUserByIdCmd userscmds.Cmd[userscmds.UpdateUserByIDCmdInput, usersmodels.User]
 	DeleteUserByIdCmd userscmds.CmdNoOutput[userscmds.DeleteUserByIDCmdInput]
+	ListUsersCmd      userscmds.Cmd[userscmds.ListUserCmdInput, userscmds.ListUserCmdOutput]
 }
 
 func NewContainer(db *db.DB) *Container {
@@ -25,6 +27,7 @@ func NewContainer(db *db.DB) *Container {
 	usersRepository := usersrepos.NewMongoUsersRepo(db)
 	createUserCmd := userscmds.NewCreateUserCmd(usersRepository)
 	getUserByIDCmd := userscmds.NewGetUserByIDCmd(usersRepository)
+	updateUserByIdCmd := userscmds.NewUpdateUserByIDCmd(usersRepository)
 	deleteUserByIdCmd := userscmds.NewDeleteUserByIDCmd(usersRepository)
 	listUserCmd := userscmds.NewListUserCmd(usersRepository)
 
@@ -32,6 +35,7 @@ func NewContainer(db *db.DB) *Container {
 		v,
 		createUserCmd,
 		getUserByIDCmd,
+		updateUserByIdCmd,
 		deleteUserByIdCmd,
 		listUserCmd,
 	)
@@ -45,7 +49,9 @@ func NewContainer(db *db.DB) *Container {
 		UsersRepo:         usersRepository,
 		CreateUserCmd:     createUserCmd,
 		GetUserByIDCmd:    getUserByIDCmd,
-		UsersHttpAPI:      *usersHttpAPI,
+		UpdateUserByIdCmd: updateUserByIdCmd,
 		DeleteUserByIdCmd: deleteUserByIdCmd,
+		ListUsersCmd:      listUserCmd,
+		UsersHttpAPI:      *usersHttpAPI,
 	}
 }

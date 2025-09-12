@@ -106,7 +106,14 @@ func (r *MongoUsersRepo) Create(user *models.User) (*models.User, error) {
 	return user, nil
 }
 
-func (r *MongoUsersRepo) Update(user *models.User) (*models.User, error) {
+func (r *MongoUsersRepo) UpdateByID(id string, user *models.User) (*models.User, error) {
+	userID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	user.ID = userID
+
 	updateDoc := bson.M{}
 
 	if user.FirstName != "" {
@@ -118,7 +125,7 @@ func (r *MongoUsersRepo) Update(user *models.User) (*models.User, error) {
 	}
 
 	if user.FullName != "" {
-		updateDoc["fullName"] = user.FirstName + " " + user.LastName
+		updateDoc["fullName"] = user.FullName
 	}
 
 	if user.Email != "" {
@@ -145,7 +152,16 @@ func (r *MongoUsersRepo) Update(user *models.User) (*models.User, error) {
 	filter := bson.M{"_id": user.ID}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
-	err := r.coll.FindOneAndUpdate(ctx, filter, bson.M{"$set": updateDoc}, opts).Decode(&user)
+	err = r.coll.FindOneAndUpdate(ctx, filter, bson.M{"$set": updateDoc}, opts).Decode(&user)
+	if err != nil {
+		if errors.Is(mongo.ErrNoDocuments, err) {
+			return nil, errors.New("user not found")
+		}
+
+		return nil, err
+	}
+
+	user.Password = ""
 	return user, err
 }
 
