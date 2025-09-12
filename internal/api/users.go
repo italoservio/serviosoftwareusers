@@ -16,4 +16,7 @@ func RegisterUsersRoutes(mux *mux.Router, c *deps.Container) {
 	mux.
 		Handle("/users/{id}", http.HandlerFunc(c.UsersHttpAPI.DeleteUserByID)).
 		Methods("DELETE")
+	mux.
+		Handle("/users", http.HandlerFunc(c.UsersHttpAPI.ListUsers)).
+		Methods("GET")
 }

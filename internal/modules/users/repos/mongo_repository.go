@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"strings"
 	"time"
 )
 
@@ -161,7 +162,7 @@ func (r *MongoUsersRepo) DeleteByID(id string) error {
 	return err
 }
 
-func (r *MongoUsersRepo) List(input ListInput) (*ListOutput, error) {
+func (r *MongoUsersRepo) List(input *ListInput) (*ListOutput, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -172,15 +173,20 @@ func (r *MongoUsersRepo) List(input ListInput) (*ListOutput, error) {
 	}
 
 	if input.FullName != nil && len(*input.FullName) > 0 {
-		match["fullName"] = bson.M{"$in": *input.FullName}
+		match["fullName"] = bson.M{
+			"$regex":   strings.Join(*input.FullName, "|"),
+			"$options": "i",
+		}
 	}
 
 	if input.Roles != nil && len(*input.Roles) > 0 {
 		match["roles"] = bson.M{"$all": *input.Roles}
 	}
 
+	sortBy := *input.SortBy
+
 	sortOrder := 1
-	if input.Order == "desc" {
+	if *input.Order == "desc" {
 		sortOrder = -1
 	}
 
@@ -189,11 +195,18 @@ func (r *MongoUsersRepo) List(input ListInput) (*ListOutput, error) {
 		{{Key: "$facet", Value: bson.M{
 			"total": []bson.M{{"$count": "count"}},
 			"items": []bson.M{
-				{"$sort": bson.M{input.SortBy: sortOrder}},
-				{"$skip": input.Offset},
+				{"$sort": bson.M{sortBy: sortOrder}},
+				{"$skip": (input.Page - 1) * input.Limit},
 				{"$limit": input.Limit},
+				{"$project": bson.M{"password": 0}},
 			}},
 		}},
+		{{Key: "$project", Value: bson.M{
+			"total": bson.M{
+				"$arrayElemAt": []interface{}{"$total.count", 0},
+			},
+			"items": "$items",
+		}}},
 	})
 	defer cursor.Close(ctx)
 
@@ -201,10 +214,15 @@ func (r *MongoUsersRepo) List(input ListInput) (*ListOutput, error) {
 		return nil, err
 	}
 
-	var output ListOutput
-	if err = cursor.All(ctx, &output); err != nil {
+	var results []ListOutput
+	if err = cursor.All(ctx, &results); err != nil {
 		return nil, err
 	}
 
+	if len(results) == 0 {
+		return &ListOutput{}, nil
+	}
+
+	output := results[0]
 	return &output, nil
 }

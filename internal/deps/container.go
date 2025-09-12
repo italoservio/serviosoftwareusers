@@ -26,12 +26,14 @@ func NewContainer(db *db.DB) *Container {
 	createUserCmd := userscmds.NewCreateUserCmd(usersRepository)
 	getUserByIDCmd := userscmds.NewGetUserByIDCmd(usersRepository)
 	deleteUserByIdCmd := userscmds.NewDeleteUserByIDCmd(usersRepository)
+	listUserCmd := userscmds.NewListUserCmd(usersRepository)
 
 	usersHttpAPI := users.NewUsersHttpAPI(
 		v,
 		createUserCmd,
 		getUserByIDCmd,
 		deleteUserByIdCmd,
+		listUserCmd,
 	)
 
 	if err != nil {
