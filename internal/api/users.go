@@ -7,19 +7,25 @@ import (
 )
 
 func RegisterUsersRoutes(mux *mux.Router, c *deps.Container) {
-	mux.
-		Handle("/users", http.HandlerFunc(c.UsersHttpAPI.CreateUser)).
+	usersRouter := mux.PathPrefix("/users").Subrouter()
+
+	usersRouter.
+		Handle("", http.HandlerFunc(c.UsersHttpAPI.CreateUser)).
 		Methods("POST")
-	mux.
-		Handle("/users/{id}", http.HandlerFunc(c.UsersHttpAPI.GetUserByID)).
+	usersRouter.
+		Handle("/{id}", http.HandlerFunc(c.UsersHttpAPI.GetUserByID)).
 		Methods("GET")
-	mux.
-		Handle("/users/{id}", http.HandlerFunc(c.UsersHttpAPI.DeleteUserByID)).
+	usersRouter.
+		Handle("/{id}", http.HandlerFunc(c.UsersHttpAPI.DeleteUserByID)).
 		Methods("DELETE")
-	mux.
-		Handle("/users", http.HandlerFunc(c.UsersHttpAPI.ListUsers)).
+	usersRouter.
+		Handle("", http.HandlerFunc(c.UsersHttpAPI.ListUsers)).
 		Methods("GET")
-	mux.
-		Handle("/users/{id}", http.HandlerFunc(c.UsersHttpAPI.UpdateUserByID)).
+	usersRouter.
+		Handle("/{id}", http.HandlerFunc(c.UsersHttpAPI.UpdateUserByID)).
 		Methods("PUT", "PATCH")
+
+	usersRouter.
+		Handle("/signin", http.HandlerFunc(c.UsersHttpAPI.SignIn)).
+		Methods("POST")
 }

@@ -140,6 +140,10 @@ func (r *MongoUsersRepo) UpdateByID(id string, user *models.User) (*models.User,
 		updateDoc["roles"] = user.Roles
 	}
 
+	if user.SignedInAt != nil {
+		updateDoc["signedInAt"] = user.SignedInAt
+	}
+
 	if len(updateDoc) == 0 {
 		return nil, errors.New("no fields to update")
 	}

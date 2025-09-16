@@ -19,6 +19,7 @@ type UsersHttpAPI struct {
 	UpdateUserByIDCmd commands.Cmd[commands.UpdateUserByIDCmdInput, models.User]
 	DeleteUserByIDCmd commands.CmdNoOutput[commands.DeleteUserByIDCmdInput]
 	ListUserCmd       commands.Cmd[commands.ListUserCmdInput, commands.ListUserCmdOutput]
+	SignInCmd         commands.Cmd[commands.SignInCmdInput, commands.SignInCmdOutput]
 }
 
 func NewUsersHttpAPI(
@@ -28,6 +29,7 @@ func NewUsersHttpAPI(
 	updateUserByIdCmd *commands.UpdateUserByIDCmd,
 	deleteUserByIdCmd *commands.DeleteUserByIDCmd,
 	listUserCmd *commands.ListUserCmd,
+	signInCmd *commands.SignInCmd,
 ) *UsersHttpAPI {
 	return &UsersHttpAPI{
 		validate:          *validate,
@@ -36,6 +38,7 @@ func NewUsersHttpAPI(
 		UpdateUserByIDCmd: updateUserByIdCmd,
 		DeleteUserByIDCmd: deleteUserByIdCmd,
 		ListUserCmd:       listUserCmd,
+		SignInCmd:         signInCmd,
 	}
 }
 
@@ -154,7 +157,7 @@ func (u *UsersHttpAPI) ListUsers(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
 	payload := commands.ListUserCmdInput{
-		&repos.ListInput{
+		ListInput: &repos.ListInput{
 			Limit:    cast.StrToInt64(query.Get("limit")),
 			Page:     cast.StrToInt64(query.Get("page")),
 			SortBy:   cast.StrToStringPtr(query.Get("sortBy")),
@@ -172,6 +175,36 @@ func (u *UsersHttpAPI) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := u.ListUserCmd.Exec(&payload)
+	if err != nil {
+		exception.ToAppException(err).WriteJSON(w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response, _ := json.Marshal(result)
+
+	w.Write(response)
+}
+
+func (u *UsersHttpAPI) SignIn(w http.ResponseWriter, r *http.Request) {
+	body := r.Body
+	defer body.Close()
+
+	var payload commands.SignInCmdInput
+	err := json.NewDecoder(body).Decode(&payload)
+	if err != nil {
+		exception.NewPayloadException().WriteJSON(w)
+		return
+	}
+
+	err = u.validate.Struct(payload)
+	if err != nil {
+		exception.NewValidatorException(err).WriteJSON(w)
+		return
+	}
+
+	result, err := u.SignInCmd.Exec(&payload)
 	if err != nil {
 		exception.ToAppException(err).WriteJSON(w)
 		return

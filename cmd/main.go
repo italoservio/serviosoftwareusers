@@ -3,15 +3,17 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/italoservio/serviosoftwareusers/internal/api"
-	"github.com/italoservio/serviosoftwareusers/internal/deps"
-	"github.com/italoservio/serviosoftwareusers/pkg/db"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+
+	"github.com/italoservio/serviosoftwareusers/internal/api"
+	"github.com/italoservio/serviosoftwareusers/internal/deps"
+	"github.com/italoservio/serviosoftwareusers/pkg/db"
 
 	"github.com/gorilla/mux"
 	_ "github.com/joho/godotenv/autoload"
@@ -36,16 +38,19 @@ func main() {
 	svr := &http.Server{Addr: ":8080", Handler: r}
 	wg.Go(func() {
 		println("server listening on port :8080")
-		if err := svr.ListenAndServe(); err != nil && !errors.Is(http.ErrServerClosed, err) {
+
+		err := svr.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			panic(err)
 		}
+
 		println("server stopped")
 	})
 
 	exitCode := 0
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
-	signal.Notify(sigCh, os.Kill)
+	signal.Notify(sigCh, syscall.SIGINT)
+	signal.Notify(sigCh, syscall.SIGTERM)
 
 	wg.Go(func() {
 		sig := <-sigCh

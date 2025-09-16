@@ -19,6 +19,7 @@ type Container struct {
 	UpdateUserByIdCmd userscmds.Cmd[userscmds.UpdateUserByIDCmdInput, usersmodels.User]
 	DeleteUserByIdCmd userscmds.CmdNoOutput[userscmds.DeleteUserByIDCmdInput]
 	ListUsersCmd      userscmds.Cmd[userscmds.ListUserCmdInput, userscmds.ListUserCmdOutput]
+	SignInCmd         userscmds.Cmd[userscmds.SignInCmdInput, userscmds.SignInCmdOutput]
 }
 
 func NewContainer(db *db.DB) *Container {
@@ -30,6 +31,7 @@ func NewContainer(db *db.DB) *Container {
 	updateUserByIdCmd := userscmds.NewUpdateUserByIDCmd(usersRepository)
 	deleteUserByIdCmd := userscmds.NewDeleteUserByIDCmd(usersRepository)
 	listUserCmd := userscmds.NewListUserCmd(usersRepository)
+	signInCmd := userscmds.NewSignInCmd(usersRepository)
 
 	usersHttpAPI := users.NewUsersHttpAPI(
 		v,
@@ -38,6 +40,7 @@ func NewContainer(db *db.DB) *Container {
 		updateUserByIdCmd,
 		deleteUserByIdCmd,
 		listUserCmd,
+		signInCmd,
 	)
 
 	if err != nil {
@@ -52,6 +55,7 @@ func NewContainer(db *db.DB) *Container {
 		UpdateUserByIdCmd: updateUserByIdCmd,
 		DeleteUserByIdCmd: deleteUserByIdCmd,
 		ListUsersCmd:      listUserCmd,
+		SignInCmd:         signInCmd,
 		UsersHttpAPI:      *usersHttpAPI,
 	}
 }

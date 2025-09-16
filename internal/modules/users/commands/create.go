@@ -33,6 +33,7 @@ func (c *CreateUserCmd) Exec(input *CreateUserInput) (*models.User, error) {
 	user.LastName = input.LastName
 	user.Email = input.Email
 	user.Roles = input.Roles
+	user.SignedInAt = nil
 
 	user.FullName = fmt.Sprintf("%s %s", input.FirstName, input.LastName)
 
