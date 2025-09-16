@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
+	"github.com/italoservio/serviosoftwareusers/pkg/env"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
 )
 
 type CreateUserCmd struct {
-	repo repos.UsersRepo
+	envVars env.Env
+	repo    repos.UsersRepo
 }
 
-func NewCreateUserCmd(repo repos.UsersRepo) *CreateUserCmd {
-	return &CreateUserCmd{repo: repo}
+func NewCreateUserCmd(envVars env.Env, repo repos.UsersRepo) *CreateUserCmd {
+	return &CreateUserCmd{envVars, repo}
 }
 
 type CreateUserInput struct {
@@ -37,7 +39,7 @@ func (c *CreateUserCmd) Exec(input *CreateUserInput) (*models.User, error) {
 
 	user.FullName = fmt.Sprintf("%s %s", input.FirstName, input.LastName)
 
-	hashedPass, err := HashPass(input.Password)
+	hashedPass, err := HashPass(c.envVars.PASS_SECRET, input.Password)
 	if err != nil {
 		return nil, exception.NewInternalException(err.Error())
 	}

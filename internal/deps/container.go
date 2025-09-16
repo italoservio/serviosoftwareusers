@@ -7,10 +7,13 @@ import (
 	usersmodels "github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	usersrepos "github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
 	"github.com/italoservio/serviosoftwareusers/pkg/db"
+	"github.com/italoservio/serviosoftwareusers/pkg/env"
 	"github.com/italoservio/serviosoftwareusers/pkg/validation"
 )
 
 type Container struct {
+	DB                db.DB
+	Env               env.Env
 	Validator         validator.Validate
 	UsersRepo         usersrepos.UsersRepo
 	UsersHttpAPI      users.UsersHttpAPI
@@ -22,19 +25,24 @@ type Container struct {
 	SignInCmd         userscmds.Cmd[userscmds.SignInCmdInput, userscmds.SignInCmdOutput]
 }
 
-func NewContainer(db *db.DB) *Container {
-	v, err := validation.NewValidator()
+func NewContainer(envVars *env.Env) *Container {
+	dbConn, err := db.NewDB((*envVars).MONGODB_URI)
+	if err != nil {
+		panic(err)
+	}
 
-	usersRepository := usersrepos.NewMongoUsersRepo(db)
-	createUserCmd := userscmds.NewCreateUserCmd(usersRepository)
+	valdtr, err := validation.NewValidator()
+
+	usersRepository := usersrepos.NewMongoUsersRepo(dbConn)
+	createUserCmd := userscmds.NewCreateUserCmd(*envVars, usersRepository)
 	getUserByIDCmd := userscmds.NewGetUserByIDCmd(usersRepository)
-	updateUserByIdCmd := userscmds.NewUpdateUserByIDCmd(usersRepository)
+	updateUserByIdCmd := userscmds.NewUpdateUserByIDCmd(*envVars, usersRepository)
 	deleteUserByIdCmd := userscmds.NewDeleteUserByIDCmd(usersRepository)
 	listUserCmd := userscmds.NewListUserCmd(usersRepository)
-	signInCmd := userscmds.NewSignInCmd(usersRepository)
+	signInCmd := userscmds.NewSignInCmd(*envVars, usersRepository)
 
 	usersHttpAPI := users.NewUsersHttpAPI(
-		v,
+		valdtr,
 		createUserCmd,
 		getUserByIDCmd,
 		updateUserByIdCmd,
@@ -48,7 +56,9 @@ func NewContainer(db *db.DB) *Container {
 	}
 
 	return &Container{
-		Validator:         *v,
+		DB:                *dbConn,
+		Env:               *envVars,
+		Validator:         *valdtr,
 		UsersRepo:         usersRepository,
 		CreateUserCmd:     createUserCmd,
 		GetUserByIDCmd:    getUserByIDCmd,

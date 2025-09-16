@@ -3,29 +3,31 @@ package api
 import (
 	"github.com/gorilla/mux"
 	"github.com/italoservio/serviosoftwareusers/internal/deps"
+	"github.com/italoservio/serviosoftwareusers/pkg/jwt"
 	"net/http"
 )
 
 func RegisterUsersRoutes(mux *mux.Router, c *deps.Container) {
-	usersRouter := mux.PathPrefix("/users").Subrouter()
-
-	usersRouter.
-		Handle("", http.HandlerFunc(c.UsersHttpAPI.CreateUser)).
-		Methods("POST")
-	usersRouter.
+	protected := mux.PathPrefix("/users").Subrouter()
+	protected.Use(jwt.Middleware(c.Env))
+	protected.
 		Handle("/{id}", http.HandlerFunc(c.UsersHttpAPI.GetUserByID)).
 		Methods("GET")
-	usersRouter.
+	protected.
 		Handle("/{id}", http.HandlerFunc(c.UsersHttpAPI.DeleteUserByID)).
 		Methods("DELETE")
-	usersRouter.
+	protected.
 		Handle("", http.HandlerFunc(c.UsersHttpAPI.ListUsers)).
 		Methods("GET")
-	usersRouter.
+	protected.
 		Handle("/{id}", http.HandlerFunc(c.UsersHttpAPI.UpdateUserByID)).
 		Methods("PUT", "PATCH")
 
-	usersRouter.
+	public := mux.PathPrefix("/users").Subrouter()
+	public.
+		Handle("", http.HandlerFunc(c.UsersHttpAPI.CreateUser)).
+		Methods("POST")
+	public.
 		Handle("/signin", http.HandlerFunc(c.UsersHttpAPI.SignIn)).
 		Methods("POST")
 }

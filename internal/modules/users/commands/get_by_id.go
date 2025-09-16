@@ -15,7 +15,7 @@ type GetUserByIDCmdInput struct {
 }
 
 func NewGetUserByIDCmd(repo repos.UsersRepo) *GetUserByIDCmd {
-	return &GetUserByIDCmd{repo: repo}
+	return &GetUserByIDCmd{repo}
 }
 
 func (c *GetUserByIDCmd) Exec(input *GetUserByIDCmdInput) (*models.User, error) {

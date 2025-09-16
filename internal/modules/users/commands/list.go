@@ -9,7 +9,7 @@ type ListUserCmd struct {
 }
 
 func NewListUserCmd(repo repos.UsersRepo) *ListUserCmd {
-	return &ListUserCmd{repo: repo}
+	return &ListUserCmd{repo}
 }
 
 type ListUserCmdInput struct {

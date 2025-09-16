@@ -3,15 +3,17 @@ package commands
 import (
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
+	"github.com/italoservio/serviosoftwareusers/pkg/env"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
 )
 
 type UpdateUserByIDCmd struct {
-	repo repos.UsersRepo
+	envVars env.Env
+	repo    repos.UsersRepo
 }
 
-func NewUpdateUserByIDCmd(repo repos.UsersRepo) *UpdateUserByIDCmd {
-	return &UpdateUserByIDCmd{repo: repo}
+func NewUpdateUserByIDCmd(envVars env.Env, repo repos.UsersRepo) *UpdateUserByIDCmd {
+	return &UpdateUserByIDCmd{envVars, repo}
 }
 
 type UpdateUserByIDCmdInput struct {
@@ -47,7 +49,7 @@ func (c *UpdateUserByIDCmd) Exec(input *UpdateUserByIDCmdInput) (*models.User, e
 	}
 
 	if input.Password != "" {
-		hashedPass, err := HashPass(input.Password)
+		hashedPass, err := HashPass(c.envVars.PASS_SECRET, input.Password)
 		if err != nil {
 			return nil, exception.NewInternalException(err.Error())
 		}

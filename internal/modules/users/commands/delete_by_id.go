@@ -14,7 +14,7 @@ type DeleteUserByIDCmdInput struct {
 }
 
 func NewDeleteUserByIDCmd(repo repos.UsersRepo) *DeleteUserByIDCmd {
-	return &DeleteUserByIDCmd{repo: repo}
+	return &DeleteUserByIDCmd{repo}
 }
 
 func (c *DeleteUserByIDCmd) Exec(input *DeleteUserByIDCmdInput) error {

@@ -3,18 +3,19 @@ package commands
 import (
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
+	"github.com/italoservio/serviosoftwareusers/pkg/env"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
 	"github.com/italoservio/serviosoftwareusers/pkg/jwt"
-	"os"
 	"time"
 )
 
 type SignInCmd struct {
-	repo repos.UsersRepo
+	envVars env.Env
+	repo    repos.UsersRepo
 }
 
-func NewSignInCmd(repo repos.UsersRepo) *SignInCmd {
-	return &SignInCmd{repo: repo}
+func NewSignInCmd(envVars env.Env, repo repos.UsersRepo) *SignInCmd {
+	return &SignInCmd{envVars, repo}
 }
 
 type SignInCmdInput struct {
@@ -42,7 +43,7 @@ func (c *SignInCmd) Exec(input *SignInCmdInput) (*SignInCmdOutput, error) {
 		StartedAt: time.Now().UTC(),
 	}
 
-	token, err := jwt.GenerateToken(os.Getenv("AUTH_SECRET"), session)
+	token, err := jwt.GenerateToken(c.envVars.AUTH_SECRET, session)
 	if err != nil {
 		return nil, exception.NewInternalException("Nao foi possivel gerar o token de autenticacao")
 	}
@@ -53,7 +54,7 @@ func (c *SignInCmd) Exec(input *SignInCmdInput) (*SignInCmdOutput, error) {
 }
 
 func (c *SignInCmd) comparePass(userPass, plainPass string) bool {
-	hashedPass, err := HashPass(plainPass)
+	hashedPass, err := HashPass(c.envVars.PASS_SECRET, plainPass)
 	if err != nil {
 		return false
 	}

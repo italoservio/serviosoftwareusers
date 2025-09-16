@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/italoservio/serviosoftwareusers/pkg/env"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,29 +14,22 @@ import (
 
 	"github.com/italoservio/serviosoftwareusers/internal/api"
 	"github.com/italoservio/serviosoftwareusers/internal/deps"
-	"github.com/italoservio/serviosoftwareusers/pkg/db"
 
 	"github.com/gorilla/mux"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
-	d, err := db.NewDB(os.Getenv("MONGODB_URI"))
+	envVars := env.Load()
+	container := deps.NewContainer(envVars)
+	router := mux.NewRouter()
+	router.MethodNotAllowedHandler = http.HandlerFunc(api.MethodNotAllowed)
 
-	if err != nil {
-		panic(err)
-	}
-
-	c := deps.NewContainer(d)
-	r := mux.NewRouter()
-	r.MethodNotAllowedHandler = http.HandlerFunc(api.MethodNotAllowed)
-
-	api.RegisterInfraRoutes(r)
-	api.RegisterUsersRoutes(r, c)
+	api.RegisterInfraRoutes(router)
+	api.RegisterUsersRoutes(router, container)
 
 	wg := sync.WaitGroup{}
 
-	svr := &http.Server{Addr: ":8080", Handler: r}
+	svr := &http.Server{Addr: ":8080", Handler: router}
 	wg.Go(func() {
 		println("server listening on port :8080")
 
@@ -64,7 +58,7 @@ func main() {
 			exitCode = 1
 		}
 
-		if err := d.Disconnect(); err != nil {
+		if err := container.DB.Disconnect(); err != nil {
 			println("error disconnecting from database:", err.Error())
 			exitCode = 1
 		}

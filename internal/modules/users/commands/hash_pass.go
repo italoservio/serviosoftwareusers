@@ -4,12 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"os"
 )
 
-func HashPass(pass string) (string, error) {
-	secret := os.Getenv("PASS_SECRET")
-
+func HashPass(secret, pass string) (string, error) {
 	if secret == "" {
 		return "", errors.New("Nao ha chave de criptografia de senha")
 	}
