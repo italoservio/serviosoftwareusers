@@ -2,9 +2,8 @@ package rbac
 
 import (
 	"errors"
-	"github.com/gorilla/mux"
-	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
+	"github.com/italoservio/serviosoftwareusers/pkg/jwt"
 	"net/http"
 	"strings"
 )
@@ -24,16 +23,15 @@ func Middleware(allowed []Role) func(next http.Handler) http.Handler {
 			}
 
 			hasRole := false
-			hasAdminRole := false
 			for _, role := range session.Roles {
 				hasRole = allowedMap[role]
 
 				if hasRole && strings.Contains(role, "admin") {
-					hasAdminRole = true
+					session.IsAdmin = true
 				}
 			}
 
-			if !hasRole || !isResourceOwnerOrAdmin(r, session, hasAdminRole) {
+			if !hasRole {
 				exception.NewForbiddenException().WriteJSON(w)
 				return
 			}
@@ -43,7 +41,7 @@ func Middleware(allowed []Role) func(next http.Handler) http.Handler {
 	}
 }
 
-func getContextSession(r *http.Request) (*models.Session, error) {
+func getContextSession(r *http.Request) (*jwt.Session, error) {
 	ctx := r.Context()
 	ctxSession := ctx.Value("session")
 
@@ -51,24 +49,11 @@ func getContextSession(r *http.Request) (*models.Session, error) {
 		return nil, errors.New("Sessao nao encontrada no contexto")
 	}
 
-	session, ok := ctxSession.(*models.Session)
+	session, ok := ctxSession.(*jwt.Session)
 
 	if !ok {
 		return nil, errors.New("Sessao invalida no contexto")
 	}
 
 	return session, nil
-}
-
-func isResourceOwnerOrAdmin(r *http.Request, session *models.Session, hasAdminRole bool) bool {
-	pathParameters := mux.Vars(r)
-	userId, hasUserIdInPathParams := pathParameters["userId"]
-
-	isResourceOwner := userId == (*session).UserID
-
-	if hasUserIdInPathParams && (!isResourceOwner && !hasAdminRole) {
-		return false
-	}
-
-	return true
 }

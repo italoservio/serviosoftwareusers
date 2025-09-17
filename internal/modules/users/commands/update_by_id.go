@@ -5,6 +5,7 @@ import (
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
 	"github.com/italoservio/serviosoftwareusers/pkg/env"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
+	"github.com/italoservio/serviosoftwareusers/pkg/jwt"
 )
 
 type UpdateUserByIDCmd struct {
@@ -17,16 +18,22 @@ func NewUpdateUserByIDCmd(envVars env.Env, repo repos.UsersRepo) *UpdateUserByID
 }
 
 type UpdateUserByIDCmdInput struct {
-	ID        string   `bson:"_id,omitempty" json:"id,omitempty,string" validate:"omitempty,omitnil,mongodb"`
-	FirstName string   `bson:"firstName" json:"firstName" validate:"omitempty,omitnil,min=2,max=100"`
-	LastName  string   `bson:"lastName" json:"lastName" validate:"omitempty,omitnil,min=2,max=100"`
-	FullName  string   `bson:"fullName" json:"fullName" validate:"omitempty,omitnil,required,min=2,max=200"`
-	Email     string   `bson:"email" json:"email" validate:"omitempty,omitnil,email,min=5,max=200"`
-	Roles     []string `bson:"roles" json:"roles" validate:"omitempty,omitnil,min=1,dive,required,oneofrole"`
-	Password  string   `bson:"password,omitempty" json:"password,omitempty" validate:"omitempty,min=8,max=100"`
+	ID        string       `bson:"_id,omitempty" json:"id,omitempty,string" validate:"omitempty,omitnil,mongodb"`
+	Session   *jwt.Session `validate:"-"`
+	FirstName string       `bson:"firstName" json:"firstName" validate:"omitempty,omitnil,min=2,max=100"`
+	LastName  string       `bson:"lastName" json:"lastName" validate:"omitempty,omitnil,min=2,max=100"`
+	FullName  string       `bson:"fullName" json:"fullName" validate:"omitempty,omitnil,required,min=2,max=200"`
+	Email     string       `bson:"email" json:"email" validate:"omitempty,omitnil,email,min=5,max=200"`
+	Roles     []string     `bson:"roles" json:"roles" validate:"omitempty,omitnil,min=1,dive,required,oneofrole"`
+	Password  string       `bson:"password,omitempty" json:"password,omitempty" validate:"omitempty,min=8,max=100"`
 }
 
 func (c *UpdateUserByIDCmd) Exec(input *UpdateUserByIDCmdInput) (*models.User, error) {
+	sess := input.Session
+	if sess == nil || (!sess.IsAdmin && input.ID != sess.UserID) {
+		return nil, exception.NewForbiddenException()
+	}
+
 	existing, err := c.repo.GetByID(input.ID)
 	if err != nil {
 		return nil, err

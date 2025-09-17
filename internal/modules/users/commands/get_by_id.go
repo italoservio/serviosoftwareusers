@@ -4,6 +4,7 @@ import (
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
+	"github.com/italoservio/serviosoftwareusers/pkg/jwt"
 )
 
 type GetUserByIDCmd struct {
@@ -11,7 +12,8 @@ type GetUserByIDCmd struct {
 }
 
 type GetUserByIDCmdInput struct {
-	ID string `validate:"required,mongodb"`
+	ID      string       `validate:"required,mongodb"`
+	Session *jwt.Session `validate:"-"`
 }
 
 func NewGetUserByIDCmd(repo repos.UsersRepo) *GetUserByIDCmd {
@@ -19,6 +21,11 @@ func NewGetUserByIDCmd(repo repos.UsersRepo) *GetUserByIDCmd {
 }
 
 func (c *GetUserByIDCmd) Exec(input *GetUserByIDCmdInput) (*models.User, error) {
+	sess := input.Session
+	if sess == nil || (!sess.IsAdmin && input.ID != sess.UserID) {
+		return nil, exception.NewForbiddenException()
+	}
+
 	user, err := c.repo.GetByID(input.ID)
 	if err != nil {
 		return nil, exception.NewRepoException(

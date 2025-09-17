@@ -3,11 +3,10 @@ package jwt
 import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"time"
 )
 
-func GenerateToken(secret string, session models.Session) (string, error) {
+func GenerateToken(secret string, session Session) (string, error) {
 	if secret == "" {
 		return "", errors.New("Nao ha chave de criptografia de token")
 	}

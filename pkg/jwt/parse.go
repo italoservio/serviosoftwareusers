@@ -2,11 +2,10 @@ package jwt
 
 import (
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/italoservio/serviosoftwareusers/internal/modules/users/models"
 	"time"
 )
 
-func ParseToken(secret string, tokenStr string) (*models.Session, error) {
+func ParseToken(secret string, tokenStr string) (*Session, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenMalformed
@@ -27,7 +26,7 @@ func ParseToken(secret string, tokenStr string) (*models.Session, error) {
 		return nil, jwt.ErrTokenInvalidClaims
 	}
 
-	session := &models.Session{}
+	session := &Session{}
 
 	if userID, ok := claims["userId"].(string); ok {
 		session.UserID = userID

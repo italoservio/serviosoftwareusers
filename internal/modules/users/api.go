@@ -9,6 +9,7 @@ import (
 	"github.com/italoservio/serviosoftwareusers/internal/modules/users/repos"
 	"github.com/italoservio/serviosoftwareusers/pkg/cast"
 	"github.com/italoservio/serviosoftwareusers/pkg/exception"
+	"github.com/italoservio/serviosoftwareusers/pkg/jwt"
 	"net/http"
 )
 
@@ -74,10 +75,15 @@ func (u *UsersHttpAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UsersHttpAPI) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("session").(*jwt.Session)
+
 	pathParameters := mux.Vars(r)
 	userID := pathParameters["userId"]
 
-	payload := commands.GetUserByIDCmdInput{ID: userID}
+	payload := commands.GetUserByIDCmdInput{
+		ID:      userID,
+		Session: session,
+	}
 
 	err := u.validate.Struct(payload)
 	if err != nil {
@@ -99,6 +105,8 @@ func (u *UsersHttpAPI) GetUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UsersHttpAPI) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("session").(*jwt.Session)
+
 	pathParameters := mux.Vars(r)
 	userID := pathParameters["userId"]
 
@@ -113,6 +121,8 @@ func (u *UsersHttpAPI) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload.ID = userID
+	payload.Session = session
+
 	err = u.validate.Struct(payload)
 	if err != nil {
 		exception.NewValidatorException(err).WriteJSON(w)
@@ -133,10 +143,15 @@ func (u *UsersHttpAPI) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UsersHttpAPI) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("session").(*jwt.Session)
+
 	pathParameters := mux.Vars(r)
 	userID := pathParameters["userId"]
 
-	payload := commands.DeleteUserByIDCmdInput{ID: userID}
+	payload := commands.DeleteUserByIDCmdInput{
+		ID:      userID,
+		Session: session,
+	}
 
 	err := u.validate.Struct(payload)
 	if err != nil {

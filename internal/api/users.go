@@ -12,22 +12,22 @@ func RegisterUsersRoutes(mux *mux.Router, c *deps.Container) {
 	protected := mux.PathPrefix("/users").Subrouter()
 	protected.Use(jwt.Middleware(c.Env))
 
-	protectedAdminOnly := protected.PathPrefix("").Subrouter()
-	protectedAdminOnly.Use(rbac.Middleware(rbac.GetAdminRoles()))
+	protectedAdminRoles := protected.PathPrefix("").Subrouter()
+	protectedAdminRoles.Use(rbac.Middleware(rbac.GetAdminRoles()))
 
-	protectedAdminAndOwners := protected.PathPrefix("").Subrouter()
-	protectedAdminAndOwners.Use(rbac.Middleware(rbac.GetAllRoles()))
+	protectedAllRoles := protected.PathPrefix("").Subrouter()
+	protectedAllRoles.Use(rbac.Middleware(rbac.GetAllRoles()))
 
-	protectedAdminOnly.
+	protectedAdminRoles.
 		Handle("/{userId}", http.HandlerFunc(c.UsersHttpAPI.DeleteUserByID)).
 		Methods("DELETE")
-	protectedAdminOnly.
+	protectedAdminRoles.
 		Handle("", http.HandlerFunc(c.UsersHttpAPI.ListUsers)).
 		Methods("GET")
-	protectedAdminAndOwners.
+	protectedAllRoles.
 		Handle("/{userId}", http.HandlerFunc(c.UsersHttpAPI.GetUserByID)).
 		Methods("GET")
-	protectedAdminAndOwners.
+	protectedAllRoles.
 		Handle("/{userId}", http.HandlerFunc(c.UsersHttpAPI.UpdateUserByID)).
 		Methods("PUT", "PATCH")
 

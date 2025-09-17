@@ -37,7 +37,7 @@ func (c *SignInCmd) Exec(input *SignInCmdInput) (*SignInCmdOutput, error) {
 		return nil, exception.NewPayloadException("Usuario ou senha invalidos")
 	}
 
-	session := models.Session{
+	session := jwt.Session{
 		UserID:    user.ID.Hex(),
 		Roles:     user.Roles,
 		StartedAt: time.Now().UTC(),
@@ -62,7 +62,7 @@ func (c *SignInCmd) comparePass(userPass, plainPass string) bool {
 	return userPass == hashedPass
 }
 
-func (c *SignInCmd) updateSignedInAt(user *models.User, session *models.Session) {
+func (c *SignInCmd) updateSignedInAt(user *models.User, session *jwt.Session) {
 	_, err := c.repo.UpdateByID(user.StringID(), &models.User{SignedInAt: &session.StartedAt})
 	if err != nil {
 		println("failed to update user signedInAt:", err.Error())
