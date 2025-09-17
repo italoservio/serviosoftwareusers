@@ -2,14 +2,13 @@ package validation
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/italoservio/serviosoftwareusers/pkg/rbac"
 	"strings"
 )
 
-var AllowedRoles = []string{"ads:admin", "ads:user"}
-
 func validateRole(fl validator.FieldLevel) bool {
-	for _, role := range AllowedRoles {
-		if strings.EqualFold(fl.Field().String(), role) { // Case-insensitive comparison
+	for _, role := range rbac.GetAllRoles() {
+		if strings.EqualFold(fl.Field().String(), role.String()) {
 			return true
 		}
 	}

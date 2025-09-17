@@ -45,5 +45,9 @@ func ParseToken(secret string, tokenStr string) (*models.Session, error) {
 		session.StartedAt = startedAt
 	}
 
+	if expired, ok := claims["exp"].(int64); ok {
+		session.Expired = time.Unix(expired, 0).Before(time.Now())
+	}
+
 	return session, nil
 }

@@ -12,10 +12,13 @@ func GenerateToken(secret string, session models.Session) (string, error) {
 		return "", errors.New("Nao ha chave de criptografia de token")
 	}
 
+	expirationTime := time.Now().Add(24 * time.Hour)
+
 	claims := jwt.MapClaims{
 		"userId":    session.UserID,
 		"roles":     session.Roles,
 		"startedAt": session.StartedAt.UTC().Format(time.RFC3339),
+		"exp":       expirationTime.Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

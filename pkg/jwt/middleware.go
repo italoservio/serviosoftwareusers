@@ -37,6 +37,11 @@ func Middleware(e env.Env) func(next http.Handler) http.Handler {
 				return
 			}
 
+			if session.Expired {
+				exception.NewUnauthorizedException("Token expirado").WriteJSON(w)
+				return
+			}
+
 			ctx := r.Context()
 			ctxWithValue := context.WithValue(ctx, "session", session)
 			r = r.WithContext(ctxWithValue)

@@ -75,7 +75,7 @@ func (u *UsersHttpAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (u *UsersHttpAPI) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	pathParameters := mux.Vars(r)
-	userID := pathParameters["id"]
+	userID := pathParameters["userId"]
 
 	payload := commands.GetUserByIDCmdInput{ID: userID}
 
@@ -100,7 +100,7 @@ func (u *UsersHttpAPI) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 func (u *UsersHttpAPI) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 	pathParameters := mux.Vars(r)
-	userID := pathParameters["id"]
+	userID := pathParameters["userId"]
 
 	body := r.Body
 	defer body.Close()
@@ -134,7 +134,7 @@ func (u *UsersHttpAPI) UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 
 func (u *UsersHttpAPI) DeleteUserByID(w http.ResponseWriter, r *http.Request) {
 	pathParameters := mux.Vars(r)
-	userID := pathParameters["id"]
+	userID := pathParameters["userId"]
 
 	payload := commands.DeleteUserByIDCmdInput{ID: userID}
 
